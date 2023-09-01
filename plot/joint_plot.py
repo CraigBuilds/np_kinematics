@@ -1,11 +1,10 @@
 from dataclasses import dataclass
-from re import T
 import tkinter as tk
 from typing import Dict, Optional, List, Tuple
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from src.kinematics import Pose
-from plot.mouse_event_listeners import MouseEventListeners
+from plot.event_listeners import MouseEventListeners
 import numpy as np
 
 @dataclass
@@ -72,15 +71,10 @@ class JointPlot(FigureCanvasTkAgg):
     def add_connected_poses(
         self,
         poses: List[Pose],
-        point_style: str = 'o',
-        line_style: str = '-',
-        directional_ee: bool = True,
-        all_directional: bool = False,
     ) -> None:
         """add each pose (position and orientation) as connected points on the plot."""
-        style = point_style + line_style
         for pose in poses:
-            self.__pose_data[pose] = (pose, MetaData(style=style))
+            self.__pose_data[pose] = (pose, MetaData(style='-o'))
         self.redraw()
 
     def remove_pose(self, pose: Pose):
@@ -88,13 +82,6 @@ class JointPlot(FigureCanvasTkAgg):
         if pose in self.__pose_data:
             del self.__pose_data[pose]
             self.redraw()
-
-    def get_pose(self, x: float, y: float) -> Optional[Tuple[Pose, MetaData]]:
-        """get the first pose that is within 0.1 units of the given point"""
-        for pose, metadata in self.__pose_data.values():
-            if np.linalg.norm(pose.position - np.array([x, y])) < 0.1:
-                return pose, metadata
-        return None
 
     def selected_poses(self) -> List[Pose]:
         """get all the poses that are selected"""
@@ -117,7 +104,12 @@ class PointSelector(MouseEventListeners):
         for _, metadata in self.__parent.data():
             metadata.selected = False
         (x, y) = (event.xdata, event.ydata)
-        result = self.__parent.get_pose(x, y)
+        #get the first pose that is within 0.2 units of the given point
+        result = None
+        for pose, metadata in self.__parent.data():
+            if np.linalg.norm(pose.position - np.array([x, y])) < 0.2:
+                result = (pose, metadata)
+
         if result is not None:
             _, metadata = result
             metadata.selected = not metadata.selected

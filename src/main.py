@@ -1,6 +1,6 @@
 from src.kinematics import *
 from plot.joint_plot import *
-from plot.mouse_event_listeners import *
+from plot.event_listeners import *
 from matrix_math import *
 import tkinter as tk
 
